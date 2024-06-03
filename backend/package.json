@@ -1,0 +1,33 @@
+{
+  "name": "tool",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "Test.js",
+  "scripts": {
+    "test0": "echo \"Error: no test specified\" && exit 1",
+    "test1": "node program/Test.js",
+    "run": "npm run run",
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.5",
+    "@babel/preset-env": "^7.24.5",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0"
+  },
+  "babel": {
+    "presets": ["@babel/preset-env"]
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.[t|j]sx?$": "babel-jest"
+    }
+  }
+}

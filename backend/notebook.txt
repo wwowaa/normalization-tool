@@ -1,0 +1,165 @@
+#decomposeTo3NF(minimalCover, attributes, quasikey) {
+        const relations3NF = [];
+    
+        // Start with a relation containing the quasikey
+        relations3NF.push(new Relation(quasikey));
+    
+        // Iterate over each dependency in the minimal cover
+        for (const dependency of minimalCover) {
+            // Check if the dependency is fully functionally dependent on the quasikey
+            const isFullyDependent = this.#isFullyDependent(dependency, quasikey, minimalCover);
+    
+            if (!isFullyDependent) {
+                // Create a new relation for the dependency
+                const relation = new Relation([...dependency.x, ...dependency.y]);
+    
+                // Add the relation to 3NF relations
+                relations3NF.push(relation);
+    
+                // Remove the processed dependency from the minimal cover
+                minimalCover.splice(minimalCover.indexOf(dependency), 1);
+            }
+        }
+    
+        return relations3NF;
+    }
+    
+    #isFullyDependent(dependency, quasikey, minimalCover) {
+        const candidateKeys = [quasikey]; // Assuming only one candidate key for simplicity
+    
+        // Check if the dependency is fully functionally dependent on the candidate key(s)
+        for (const key of candidateKeys) {
+            // Check if the determinant of the dependency is a subset of the candidate key
+            if (dependency.x.every(attr => key.includes(attr))) {
+                // Check if the dependency's determinant uniquely determines its dependent attributes
+                const closure = this.#closureOfAttributes(dependency.x, minimalCover);
+                if (closure.every(attr => dependency.y.includes(attr))) {
+                    return true;
+                }
+            }
+        }
+    
+        return false;
+    }
+    
+    #closureOfAttributes(attributes, dependencies) {
+        const closure = new Set(attributes); // Initialize closure with the given attributes
+        let changed = true;
+    
+        // Continue until no changes occur in the closure
+        while (changed) {
+            changed = false;
+            for (const dependency of dependencies) {
+                // Check if the determinant of the dependency is a subset of the current closure
+                if (dependency.x.every(attr => closure.has(attr))) {
+                    // Add each attribute in the dependency's dependent attributes to the closure if not already present
+                    for (const attr of dependency.y) {
+                        if (!closure.has(attr)) {
+                            closure.add(attr);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+    
+        return Array.from(closure);
+    }
+    
+
+    #isIn2NF(quasikey, dependencies) {
+        for (const dependency of dependencies) {
+            for (const attr of dependency.y) {
+                if (!this.#isFullyDependent(dependency, [attr], dependencies)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
+const ToolPageInfo = () => {
+    const [dependencies, setDependencies] = useState([{ left: '', right: '' }]);
+
+    const handleAddDependency = () => {
+        setDependencies([...dependencies, { left: '', right: '' }]);
+    };
+
+    const handleDeleteDependency = (index) => {
+        if (dependencies.length === 1) return; // Prevent deleting the last pair
+        const newDependencies = [...dependencies];
+        newDependencies.splice(index, 1);
+        setDependencies(newDependencies);
+    };
+
+    const handleInputChange = (index, event, type) => {
+        const newDependencies = [...dependencies];
+        if (type === 'left') {
+            newDependencies[index].left = event.target.value;
+        } else {
+            newDependencies[index].right = event.target.value;
+        }
+        setDependencies(newDependencies);
+    };
+
+    return (
+        <div style={toolPageText}>
+            <h1>Нормалізація БД</h1>
+            
+            <Typography variant="subtitle1" gutterBottom style={textStyle}>
+                Введіть атрибути через кому (приклад: A, B, C) в будь-якому регістрі:
+            </Typography>
+            {/* Text field for inputting attributes */}
+            <TextField label="Введіть атрибути БД" fullWidth variant="outlined" style={textFieldAttrs} />
+
+            {/* Label for functional dependencies */}
+            <Typography variant="subtitle1" gutterBottom style={textStyle}>
+                Введіть функціональні залежності через кому (приклад: A, B) в будь-якому регістрі:
+            </Typography>
+
+            {/* Input fields for functional dependencies */}
+            <div>
+                {dependencies.map((dependency, index) => (
+                    <div key={index}>
+                        <div style={textFieldPairAttrs}>
+                            <TextField
+                                label="Лівий атрибут"
+                                value={dependency.left}
+                                onChange={(e) => handleInputChange(index, e, 'left')}
+                                variant="outlined"
+                            />
+                            <Typography variant="h5" display="inline" style={{ margin: '0 1rem' }}>
+                                &#8594;
+                            </Typography>
+                            <TextField
+                                label="Правий атрибут"
+                                value={dependency.right}
+                                onChange={(e) => handleInputChange(index, e, 'right')}
+                                variant="outlined"
+                            />
+                        </div>
+                        <div style={deleteButton}>
+                            {dependencies.length > 1 && (
+                                <Button onClick={() => handleDeleteDependency(index)} style={textDeleteButtonColor}>X</Button>
+                            )}
+                        </div>
+                    </div>
+                    
+                ))}
+            </div>
+
+            {/* Button to add a new pair of text fields */}
+            <Button onClick={handleAddDependency} variant="contained" style={buttonStyle}>
+                Додати нову функціональну залежність
+            </Button>
+
+            {/* Buttons for actions */}
+            <div>
+                <Button component={Link} style={buttonStyle}>Знайти мінімальну множину ФЗ</Button>
+                <Button component={Link} style={buttonStyle}>Знайти 3НФ</Button>
+                <Button component={Link} style={buttonStyle}>Очистити екран</Button>
+            </div>
+        </div>
+    );
+};
